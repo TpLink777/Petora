@@ -1,0 +1,20 @@
+
+services:
+  db:
+    image:
+      postgres:17.6
+    restart:
+      always
+    ports:
+      - "5432:5432"
+    container_name:
+      petoradb
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgrestql/data
+
+volumes:
+    postgres:
+
