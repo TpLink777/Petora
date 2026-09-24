@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module.js';
+import { CommonModule } from './common/common.module.js';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { ProductsModule } from './products/products.module.js';
       synchronize: true,
     }),
 
-    ProductsModule
+    ProductsModule,
+    CommonModule
 
   ],
 })
