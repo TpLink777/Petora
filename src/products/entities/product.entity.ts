@@ -36,6 +36,13 @@ export class Product {
     type: string
 
 
+    @Column('text', {
+        array: true,
+        default: []
+    })
+    tags: string[]
+
+
 
     @BeforeInsert()
     checkSlug() {

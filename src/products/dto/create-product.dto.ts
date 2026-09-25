@@ -1,5 +1,5 @@
 
-import { IsInt, IsNumber, IsOptional, IsPositive, IsString, MinLength } from 'class-validator'
+import { IsArray, IsInt, IsNumber, IsOptional, IsPositive, IsString, MinLength } from 'class-validator'
 
 
 export class CreateProductDto {
@@ -29,5 +29,10 @@ export class CreateProductDto {
     @IsString()
     @MinLength(1)
     type: string
+
+    @IsString({ each: true })
+    @IsArray()
+    @IsOptional()
+    tags: string[]
 
 }
