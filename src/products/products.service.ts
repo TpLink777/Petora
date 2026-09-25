@@ -14,20 +14,11 @@ export class ProductsService {
 
   private readonly logger = new Logger('ProductsService')
 
-
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>
   ) { }
 
-
-  private handleDBExeptions(err: any) {
-    if (err.code === '23505')
-      throw new BadRequestException(`${err.detail}`)
-
-    this.logger.error(err)
-    throw new InternalServerErrorException('Error inisperado en el servidor, revisa los logs!')
-  }
 
 
   async findAll(paginationDto: PaginationDto) {
@@ -88,11 +79,28 @@ export class ProductsService {
 
 
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+
+    const product = await this.productsRepository.preload({
+      id: id,
+      ...updateProductDto
+    })
+
+    if (!product)
+      throw new NotFoundException(`El producto con id ${id} no fue encontrado`)
+
+    try {
+
+      await this.productsRepository.save(product)
+
+      return {
+        message: 'Producto actualizado exitosamente',
+        product
+      }
+    } catch (err) {
+      this.handleDBExeptions(err)
+    }
   }
-
-
 
 
   async remove(id: string) {
@@ -105,6 +113,11 @@ export class ProductsService {
   }
 
 
+  private handleDBExeptions(err: any) {
+    if (err.code === '23505')
+      throw new BadRequestException(`${err.detail}`)
 
-
+    this.logger.error(err)
+    throw new InternalServerErrorException('Error inisperado en el servidor, revisa los logs!')
+  }
 }
