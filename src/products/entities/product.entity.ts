@@ -1,7 +1,8 @@
 
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn, type Relation } from 'typeorm'
+import { ProductImage } from './product-images.entity.js'
 
-@Entity()
+@Entity({ name: 'products' })
 export class Product {
 
     @PrimaryGeneratedColumn('uuid')
@@ -30,7 +31,7 @@ export class Product {
     @Column('int', {
         default: 0
     })
-    stock: number
+    stock?: number
 
     @Column('text')
     type: string
@@ -41,6 +42,17 @@ export class Product {
         default: []
     })
     tags: string[]
+
+
+    //! relation 1 : N
+    @OneToMany(
+        () => ProductImage,
+        (productImage) => productImage.product,
+        { cascade: true, eager: true }
+        //! cascade: true permite que al guardar un producto, se guarden automáticamente sus imágenes relacionadas.
+        //! eager: true permite que al consultar un producto, se traigan automáticamente sus imágenes relacionadas.
+    )
+    images: Relation<ProductImage>[]
 
 
 
