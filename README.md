@@ -34,6 +34,15 @@ pnpm install
   pnpm start:dev
 ```
 
+## Paso 6: Ejecuitar la semilla de datos (SEED)
+
+```bash
+  http://localhost:3000/api/petora/seed
+```
+
+
+
+
 
 
 
