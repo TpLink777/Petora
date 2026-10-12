@@ -1,10 +1,12 @@
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module.js';
 
 async function main() {
+
   const app = await NestFactory.create(AppModule);
+  const logger = new Logger('main')
 
   app.setGlobalPrefix('api/petora')
 
@@ -16,6 +18,8 @@ async function main() {
   )
 
   await app.listen(process.env.PORT ?? 3000);
+  logger.log(`App running on port ${ process.env.PORT }`)
+
 }
 
 await main();
