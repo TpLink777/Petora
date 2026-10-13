@@ -43,7 +43,6 @@ export class Product {
     })
     tags: string[]
 
-
     //! relation 1 : N
     @OneToMany(
         () => ProductImage,
@@ -54,8 +53,6 @@ export class Product {
     )
     images: Relation<ProductImage>[]
 
-
-
     @BeforeInsert()
     checkSlug() {
         if (!this.slug) {
@@ -64,12 +61,10 @@ export class Product {
         this.normalizeSlug()
     }
 
-
     @BeforeUpdate()
     checkSlugBeforeUpdate() {
         this.normalizeSlug()
     }
-
 
     private normalizeSlug() {
         this.slug = this.slug
