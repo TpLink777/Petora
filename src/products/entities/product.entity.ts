@@ -1,6 +1,7 @@
 
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn, type Relation } from 'typeorm'
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, type Relation } from 'typeorm'
 import { ProductImage } from './product-images.entity.js'
+import { User } from '../../auth/entities/user.entity.js'
 
 @Entity({ name: 'products' })
 export class Product {
@@ -52,6 +53,15 @@ export class Product {
         //! eager: true permite que al consultar un producto, se traigan automáticamente sus imágenes relacionadas.
     )
     images: Relation<ProductImage>[]
+
+    //! Muchos productos solo estan relacionados a un usuario
+    @ManyToOne(
+        () => User,
+        (user) => user.product,
+        { eager: true }
+    )
+    user: Relation<User>
+
 
     @BeforeInsert()
     checkSlug() {
