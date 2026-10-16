@@ -14,7 +14,7 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
   providers: [ AuthService, JwtStrategy ],
   imports: [
 
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([ User ]),
 
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
@@ -31,6 +31,6 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
     })
 
   ],
-  exports: [ TypeOrmModule, JwtStrategy ]
+  exports: [ TypeOrmModule, JwtStrategy, JwtModule, PassportModule ]
 })
 export class AuthModule { }

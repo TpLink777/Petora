@@ -1,10 +1,13 @@
 
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { hashSync, compareSync } from "bcrypt";
+
 import { CreateUserDto, LoginUserDto } from './dto/index.js';
 import { User } from './entities/user.entity.js';
+import { JwtPayload } from './interfaces/jwt-payload.interface.js';
 
 
 @Injectable()
@@ -15,7 +18,8 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService
   ) { }
 
 
@@ -26,17 +30,18 @@ export class AuthService {
 
       const newUser = await this.userRepository.create({
         ...userData,
-        password: hashSync(password, 12)
+        password: hashSync(password, 10)
 
       })
 
       await this.userRepository.save(newUser)
 
-      const { password: _, ...resultUser } = newUser
+      const { password: _, ...user } = newUser
 
       return {
         message: "Usuario Creado exitosamente",
-        resultUser
+        user,
+        token: this.getJwtToken({ id: user.id })
       }
 
     } catch (err) {
@@ -51,29 +56,35 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true }
+      select: { email: true, password: true, id: true }
     })
 
-    if ( !user )
+    if (!user)
       throw new UnauthorizedException('Creadenciales invalidas')
 
-    if ( !compareSync(password, user.password) )
+    if (!compareSync(password, user.password))
       throw new UnauthorizedException('Creadenciales invalidas')
 
     return {
       message: 'Login exitoso',
-      user
+      ...user,
+      token: this.getJwtToken({ id: user.id })
     }
-
   }
 
 
-  handelExeptions(err: any): never {
-    this.logger.error( err )
+  private getJwtToken(payload: JwtPayload) {
 
-    if ( err.code === '23505' ) throw new BadRequestException( err.detail )
+    return this.jwtService.sign(payload)
+  }
 
-    throw new InternalServerErrorException( 'Error inesperado en el servidor, revisar logs' )
+
+  private handelExeptions(err: any): never {
+    this.logger.error(err)
+
+    if (err.code === '23505') throw new BadRequestException(err.detail)
+
+    throw new InternalServerErrorException('Error inesperado en el servidor, revisar logs')
   }
 
 }
