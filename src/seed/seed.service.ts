@@ -1,29 +1,57 @@
 
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import { ProductsService } from '../products/products.service.js';
+import { User } from '../auth/entities/user.entity.js';
 import { initialData } from './data/seed-data.js';
 
 @Injectable()
 export class SeedService {
 
   constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+
     private readonly productServices: ProductsService
   ) { }
 
 
   async runSeed() {
-    await this.insertNewProducts()
+
+    await this.deleteTables()
+
+    const adminUser = await this.insertUsers()
+    await this.insertProducts(adminUser)
 
     return `Seed Execute`;
   }
 
 
-  private async insertNewProducts() {
-    await this.productServices.deleteAllProducts() //! eliminacion antes de la insercion
+  private async deleteTables() {
+    await this.productServices.deleteAllProducts()
+    await this.userRepository.deleteAll()
+  }
 
-    await Promise.all( //! esperar a que todas las promesas se resuelvan antes de continuar
+
+  private async insertUsers() {
+
+    const seedDataUsers = await Promise.all(
+      initialData.users.map(user => (
+        this.userRepository.create(user)
+      ))
+    )
+
+    await this.userRepository.save(seedDataUsers)
+
+    return seedDataUsers[0]
+  }
+
+  private async insertProducts(user: User) {
+    await Promise.all(
       initialData.products.map(product => (
-         this.productServices.create(product) //! crear el producto en la base de datos
+        this.productServices.create( product, user )
       ))
     )
   }
