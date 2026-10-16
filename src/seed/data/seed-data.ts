@@ -1,8 +1,91 @@
 
+import { hashSync } from 'bcrypt'
 import { SeedProduct } from "../interfaces/seed-product.interface.js";
+import { SeedUser } from "../interfaces/seed-user-interface.js";
+
+interface SeedData {
+    users: SeedUser[]
+    products: SeedProduct[]
+}
 
 
-export const initialData: { products: SeedProduct[] } = {
+
+const hashedPassword = hashSync('Password123!', 10);
+
+
+export const initialData: SeedData = {
+
+    
+
+    users: [
+        {
+            fullName: 'Stiven Gomez Mazo',
+            email: 'stivengomez@petora.com',
+            password: hashedPassword,
+            roles: ['superAdmin'],
+        },
+        {
+            fullName: 'Carlos Andrés Pérez',
+            email: 'carlos.perez@example.com',
+            password: hashedPassword,
+            roles: ['user'],
+        },
+        {
+            fullName: 'María Fernanda Gómez',
+            email: 'maria.gomez@example.com',
+            password: hashedPassword,
+            roles: ['admin'],
+        },
+        {
+            fullName: 'Juan Sebastián Rodríguez',
+            email: 'juan.rodriguez@example.com',
+            password: hashedPassword,
+            roles: ['user'],
+        },
+        {
+            fullName: 'Laura Camila Martínez',
+            email: 'laura.martinez@example.com',
+            password: hashedPassword,
+            roles: ['user'],
+        },
+        {
+            fullName: 'Andrés Felipe Torres',
+            email: 'andres.torres@example.com',
+            password: hashedPassword,
+            roles: ['superAdmin'],
+        },
+        {
+            fullName: 'Valentina Ramírez López',
+            email: 'valentina.ramirez@example.com',
+            password: hashedPassword,
+            roles: ['admin'],
+        },
+        {
+            fullName: 'Daniel Esteban Herrera',
+            email: 'daniel.herrera@example.com',
+            password: hashedPassword,
+            roles: ['user'],
+        },
+        {
+            fullName: 'Sofía Alejandra Castro',
+            email: 'sofia.castro@example.com',
+            password: hashedPassword,
+            roles: ['admin'],
+        },
+        {
+            fullName: 'Mateo Nicolás Vargas',
+            email: 'mateo.vargas@example.com',
+            password: hashedPassword,
+            roles: ['user'],
+        },
+        {
+            fullName: 'Isabella Moreno Díaz',
+            email: 'isabella.moreno@example.com',
+            password: hashedPassword,
+            roles: ['superAdmin'],
+        }
+    ],
+
     products: [
         {
             title: 'Croquetas de pollo para perro adulto 2 kg',
