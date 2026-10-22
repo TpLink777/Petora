@@ -1,12 +1,20 @@
 
 import { IsEmail, IsString, IsStrongPassword, MaxLength } from "class-validator"
 
+/**
+ * DTO para iniciar sesión.
+ *
+ * Solo se solicitan email y contraseña. Las reglas de contraseña coinciden
+ * con las de registro para mantener la misma política de seguridad.
+ */
 export class LoginUserDto {
 
+    /** Email válido del usuario. */
     @IsString()
     @IsEmail()
     email: string
 
+    /** Contraseña del usuario (mismas reglas que en el registro). */
     @IsString()
     @MaxLength(50)
     @IsStrongPassword(
