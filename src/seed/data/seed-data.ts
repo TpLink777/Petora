@@ -3,16 +3,32 @@ import { hashSync } from 'bcrypt'
 import { SeedProduct } from "../interfaces/seed-product.interface.js";
 import { SeedUser } from "../interfaces/seed-user-interface.js";
 
+/**
+ * Estructura de los datos iniciales del seed.
+ */
 interface SeedData {
+    /** Usuarios de prueba que se insertarán en la base de datos. */
     users: SeedUser[]
+    /** Productos de prueba que se insertarán en la base de datos. */
     products: SeedProduct[]
 }
 
 
 
+// Todos los usuarios comparten la misma contraseña de prueba: 'Password123!'.
+// Solo debe usarse en desarrollo; nunca en producción.
 const hashedPassword = hashSync('Password123!', 10);
 
 
+/**
+ * Datos iniciales usados por `SeedService`.
+ *
+ * Incluye 11 usuarios con roles `superAdmin`, `admin` y `user`, y 28 productos
+ * de ejemplo (alimentos, snacks, juguetes y accesorios para perros).
+ *
+ * Las contraseñas ya están hasheadas con bcrypt para poder iniciar sesión
+ * directamente después de ejecutar el seed.
+ */
 export const initialData: SeedData = {
 
     
