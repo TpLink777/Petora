@@ -10,11 +10,23 @@ import { PaginationDto } from '../common/dtos/pagination.dto.js';
 import { Product, ProductImage } from './entities/index.js';
 import { User } from '../auth/entities/user.entity.js';
 
+/**
+ * Servicio de productos.
+ *
+ * Contiene la lógica de negocio del catálogo: consultas paginadas, búsquedas
+ * por UUID/título/slug, creación y actualización transaccional de productos
+ * con sus imágenes, eliminación y limpieza total para el seed.
+ */
 @Injectable()
 export class ProductsService {
 
   private readonly logger = new Logger('ProductsService')
 
+  /**
+   * @param productsRepository Repositorio de productos.
+   * @param productImageRepository Repositorio de imágenes de productos.
+   * @param dataSource Fuente de datos usada para manejar transacciones.
+   */
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
@@ -28,6 +40,12 @@ export class ProductsService {
 
 
 
+  /**
+   * Lista productos con paginación.
+   *
+   * @param paginationDto `limit` (10 por defecto) y `offset` (0 por defecto).
+   * @returns Productos con la propiedad `images` convertida a un arreglo de URLs.
+   */
   async findAll(paginationDto: PaginationDto) {
 
     const { limit = 10, offset = 0 } = paginationDto
@@ -45,6 +63,13 @@ export class ProductsService {
   }
 
 
+  /**
+   * Busca un producto por UUID, título exacto (sin distinguir mayúsculas) o slug.
+   *
+   * @param term UUID, título o slug del producto.
+   * @returns Producto encontrado con sus imágenes cargadas.
+   * @throws NotFoundException Si el término está vacío o no existe el producto.
+   */
   async findOne(term: string) {
 
     let product: Product | null
@@ -74,6 +99,17 @@ export class ProductsService {
   }
 
 
+  /**
+   * Crea un producto y lo asocia al usuario indicado.
+   *
+   * Convierte cada URL de `images` en una entidad `ProductImage` y guarda todo
+   * en cascada gracias a la configuración de la relación.
+   *
+   * @param createProductDto Datos del producto.
+   * @param user Usuario propietario del producto.
+   * @returns Mensaje de confirmación y el producto creado.
+   * @throws BadRequestException Si el título o el slug ya existen.
+   */
   async create(createProductDto: CreateProductDto, user: User) {
 
     const { images = [], ...productDetails } = createProductDto
@@ -104,6 +140,19 @@ export class ProductsService {
 
 
 
+  /**
+   * Actualiza un producto y, opcionalmente, reemplaza sus imágenes.
+   *
+   * Se ejecuta dentro de una transacción para que el producto y sus imágenes
+   * queden consistentes: si algo falla, se revierte todo (`rollback`).
+   *
+   * @param id UUID del producto.
+   * @param updateProductDto Campos a actualizar.
+   * @param user Usuario que realiza la actualización.
+   * @returns El producto actualizado con sus imágenes como URLs.
+   * @throws NotFoundException Si el producto no existe.
+   * @throws BadRequestException Si se viola una restricción de unicidad.
+   */
   async update(id: string, updateProductDto: UpdateProductDto, user: User) {
 
     const { images, ...toUpdate } = updateProductDto
@@ -112,18 +161,18 @@ export class ProductsService {
 
     if (!product) throw new NotFoundException(`El producto con id ${id} no fue encontrado`)
 
-    //! Inicio de la transacción para actualizar el producto y sus imágenes
-
-    const queryRunner = this.dataSource.createQueryRunner() //! Crear un query runner para manejar la transacción
-    await queryRunner.connect() //! Conectar la base de datos
-    await queryRunner.startTransaction() //! Iniciar la transacción
+    // Inicio de la transacción para actualizar el producto y sus imágenes.
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
 
     try {
 
       if (images) {
-        await queryRunner.manager.delete(ProductImage, { product: { id } }) //! Eliminar las imágenes existentes del producto
+        // Si llegan imágenes nuevas, se eliminan las anteriores.
+        await queryRunner.manager.delete(ProductImage, { product: { id } })
 
-        product.images = images.map((url) => { //! Crear nuevas imágenes para el producto
+        product.images = images.map((url) => {
           return this.productImageRepository.create({ url })
         })
       }
@@ -131,23 +180,30 @@ export class ProductsService {
 
       product.user = user
 
-      await queryRunner.manager.save(product) //! Guardar el producto y sus imágenes en la base de datos
-      await queryRunner.commitTransaction() //! Confirmar la transacción
-      await queryRunner.release() //! Liberar el query runner
+      await queryRunner.manager.save(product)
+      await queryRunner.commitTransaction()
+      await queryRunner.release()
 
 
-      return this.findDataPlain(id) //! Retornar el producto actualizado con sus imágenes
+      return this.findDataPlain(id)
 
     } catch (err) {
 
-      await queryRunner.rollbackTransaction() //! Revertir la transacción en caso de error
-      await queryRunner.release() //! Liberar el query runner
+      await queryRunner.rollbackTransaction()
+      await queryRunner.release()
 
       this.handleDBExeptions(err)
     }
   }
 
 
+  /**
+   * Elimina un producto y, en cascada, sus imágenes.
+   *
+   * @param id UUID del producto.
+   * @returns Mensaje de confirmación.
+   * @throws NotFoundException Si el producto no existe.
+   */
   async remove(id: string) {
     const product = await this.findOne(id)
     await this.productsRepository.remove(product)
@@ -158,6 +214,15 @@ export class ProductsService {
   }
 
 
+  /**
+   * Traduce errores de base de datos a excepciones HTTP.
+   *
+   * El código `23505` de PostgreSQL indica una violación de unicidad y se
+   * responde con `BadRequestException`. Cualquier otro error se registra y se
+   * responde con `InternalServerErrorException`.
+   *
+   * @param err Error capturado.
+   */
   private handleDBExeptions(err: any) {
     if (err.code === '23505')
       throw new BadRequestException(`${err.detail}`)
@@ -167,6 +232,12 @@ export class ProductsService {
   }
 
 
+  /**
+   * Devuelve un producto con sus imágenes como un arreglo de URLs.
+   *
+   * @param term UUID, título o slug del producto.
+   * @returns Producto "plano" listo para responder por HTTP.
+   */
   async findDataPlain(term: string) {
     const { images = [], ...rest } = await this.findOne(term)
     return {
@@ -177,6 +248,12 @@ export class ProductsService {
 
 
 
+  /**
+   * Elimina todos los productos de la base de datos.
+   * Se usa antes de volver a ejecutar el seed.
+   *
+   * @returns Resultado de la operación de borrado.
+   */
   async deleteAllProducts() {
     try {
       return await this.productsRepository.deleteAll()
