@@ -1,8 +1,14 @@
 
-import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFile, UseInterceptors, Get, Res } from '@nestjs/common';
+import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service.js';
 
+/**
+ * Controlador de carga de archivos.
+ *
+ * Expone `POST /api/petora/files/upload` para recibir una imagen por
+ * `multipart/form-data` (campo `image`), validarla y subirla a Cloudinary.
+ */
 @Controller('files')
 export class FilesController {
 
@@ -10,11 +16,20 @@ export class FilesController {
     private readonly cloudinaryService: CloudinaryService
   ) { }
 
+  /**
+   * Sube una imagen a Cloudinary.
+   *
+   * `FileInterceptor('image')` extrae el archivo del cuerpo de la petición.
+   * `ParseFilePipe` valida que:
+   * - El archivo sea obligatorio.
+   * - No supere los 5 MB.
+   * - Su tipo MIME sea `image/jpeg`, `image/png` o `image/webp`.
+   *
+   * @param file Archivo recibido por Multer en memoria.
+   * @returns Mensaje de confirmación y la URL segura (`secure_url`) de Cloudinary.
+   */
   @Post('upload')
-  //! Sirve para interceptar la solicitud y extraer el archivo del cuerpo de la solicitud.
-  //! El nombre del campo que contiene el archivo es 'image'.
-
-  @UseInterceptors(FileInterceptor('image'))  //! Se utiliza para interceptar la solicitud y extraer el archivo del cuerpo de la solicitud.))
+  @UseInterceptors(FileInterceptor('image'))
   async uploadFile(
     @UploadedFile(
       new ParseFilePipe({
@@ -28,8 +43,8 @@ export class FilesController {
           })
         ]
       })
-    ) //! Se utiliza para validar y analizar el archivo subido.
-    file: Express.Multer.File //! El tipo de archivo subido
+    )
+    file: Express.Multer.File
   ) {
 
     const result = await this.cloudinaryService.uploadImages(file)
