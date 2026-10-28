@@ -1,4 +1,5 @@
 
+import { ApiProperty } from "@nestjs/swagger"
 import { IsEmail, IsString, IsStrongPassword, MaxLength } from "class-validator"
 
 /**
@@ -10,11 +11,22 @@ import { IsEmail, IsString, IsStrongPassword, MaxLength } from "class-validator"
 export class LoginUserDto {
 
     /** Email válido del usuario. */
+    @ApiProperty({
+        description: 'Correo electrónico del usuario',
+        example: 'juan.perez@example.com',
+        format: 'email',
+    })
     @IsString()
     @IsEmail()
     email: string
 
     /** Contraseña del usuario (mismas reglas que en el registro). */
+    @ApiProperty({
+        description: 'Contraseña del usuario (mismas reglas que en el registro)',
+        example: 'MiClave123!',
+        format: 'password',
+        maxLength: 50,
+    })
     @IsString()
     @MaxLength(50)
     @IsStrongPassword(

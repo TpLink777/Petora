@@ -1,4 +1,5 @@
 
+import { ApiProperty } from "@nestjs/swagger"
 import { IsEmail, IsString, IsStrongPassword, MaxLength, MinLength } from "class-validator"
 
 /**
@@ -10,11 +11,21 @@ import { IsEmail, IsString, IsStrongPassword, MaxLength, MinLength } from "class
 export class CreateUserDto {
 
     /** Nombre completo; no puede estar vacío. */
+    @ApiProperty({
+        description: 'Nombre completo del usuario',
+        example: 'Juan Pérez',
+        minLength: 1,
+    })
     @IsString()
     @MinLength(1)
     fullName: string
 
     /** Email válido; debe ser único en la base de datos. */
+    @ApiProperty({
+        description: 'Correo electrónico único del usuario',
+        example: 'juan.perez@example.com',
+        format: 'email',
+    })
     @IsString()
     @IsEmail()
     email: string
@@ -23,6 +34,13 @@ export class CreateUserDto {
      * Contraseña segura de máximo 50 caracteres: mínimo 8, con al menos una
      * minúscula, una mayúscula, un número y un símbolo.
      */
+    @ApiProperty({
+        description: 'Contraseña segura de máximo 50 caracteres: mínimo 8, con al menos una minúscula, una mayúscula, un número y un símbolo.',
+        example: 'MiClave123!',
+        format: 'password',
+        minLength: 8,
+        maxLength: 50,
+    })
     @IsString()
     @MaxLength(50)
     @IsStrongPassword(
