@@ -11,6 +11,7 @@ El proyecto está en desarrollo y sirve como base para el backend de Petora.
 ## Tabla de contenido
 
 - [Características](#características)
+- [Cronología del proyecto](#cronología-del-proyecto)
 - [Tecnologías](#tecnologías)
 - [Requisitos previos](#requisitos-previos)
 - [Inicio rápido](#inicio-rápido)
@@ -18,6 +19,7 @@ El proyecto está en desarrollo y sirve como base para el backend de Petora.
 - [Scripts disponibles](#scripts-disponibles)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [API](#api)
+  - [Documentación interactiva (Swagger)](#documentación-interactiva-swagger)
   - [Autenticación](#autenticación)
   - [Productos](#productos)
   - [Archivos](#archivos)
@@ -41,14 +43,32 @@ El proyecto está en desarrollo y sirve como base para el backend de Petora.
 - Imágenes de productos con relación uno-a-muchos y eliminación en cascada.
 - Subida de imágenes a Cloudinary con validación de tipo y tamaño.
 - Validación global de DTOs con `class-validator` y `ValidationPipe`.
+- Endpoint para verificar y renovar la sesión (`GET /auth/check-status`).
 - Seed para cargar usuarios y productos de ejemplo.
 - Documentación del código fuente con JSDoc en español.
+- Documentación OpenAPI interactiva con Swagger UI en `/api/docs`.
+
+## Cronología del proyecto
+
+Resumen de la evolución del backend a partir del historial de Git:
+
+| Fecha | Hito | Cambios principales |
+| --- | --- | --- |
+| 23–25 sep 2026 | Base del catálogo | Inicialización con NestJS, CRUD de productos, paginación, edición y seed inicial. |
+| 6 oct 2026 | Imágenes en Cloudinary | Módulo y servicio de subida de imágenes, integración con Cloudinary y variables de entorno. |
+| 12–13 oct 2026 | Autenticación JWT | DTOs de registro y login, módulo JWT y estrategia de Passport para validar tokens. |
+| 16 oct 2026 | Roles y usuarios | Decoradores de autorización, guard de roles, vínculo usuario-producto y seed con usuarios. |
+| 21 oct 2026 | Documentación técnica | JSDoc en módulos clave, README ampliado, configuración local de PostgreSQL y plantilla de variables. |
+| 27 oct 2026 | Swagger y sesión | OpenAPI en `/api/docs`, endpoint `/auth/check-status`, `@ApiProperty` en entidades y DTOs, y limpieza de la caché de compilación. |
+
+El proyecto cuenta actualmente con autenticación JWT, autorización por roles, catálogo de productos con imágenes y documentación OpenAPI interactiva.
 
 ## Tecnologías
 
 | Tecnología | Uso |
 | --- | --- |
 | [NestJS](https://nestjs.com/) | Framework del backend |
+| [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | Documentación OpenAPI y Swagger UI |
 | [TypeORM](https://typeorm.io/) | ORM para PostgreSQL |
 | [PostgreSQL](https://www.postgresql.org/) | Base de datos relacional |
 | [Passport](https://www.passportjs.org/) + JWT | Autenticación |
@@ -111,7 +131,7 @@ Esto inicia PostgreSQL 17.6 en el puerto `5432` con el nombre y la contraseña d
 pnpm start:dev
 ```
 
-La API queda disponible en `http://localhost:3000/api/petora`.
+La API queda disponible en `http://localhost:3000/api/petora` y la documentación interactiva en `http://localhost:3000/api/docs`.
 
 ### 6. Cargar los datos de prueba (opcional)
 
@@ -165,7 +185,7 @@ También puedes abrir la URL directamente en el navegador. El seed elimina los d
 Petora/
 ├── src/
 │   ├── auth/
-│   │   ├── decorators/        # Auth, RoleProtected, GetUSer y atajos de roles
+│   │   ├── decorators/        # Auth, Authorization, RoleProtected, GetUSer y atajos de roles
 │   │   ├── dto/               # CreateUserDto y LoginUserDto
 │   │   ├── entities/          # Entidad User
 │   │   ├── guards/            # UserRoleGuard (autorización por roles)
@@ -198,7 +218,7 @@ Petora/
 │   │   ├── seed.module.ts
 │   │   └── seed.service.ts     # Borrado e inserción de datos de prueba
 │   ├── app.module.ts           # Módulo raíz (configuración global)
-│   └── main.ts                 # Punto de entrada y configuración HTTP
+│   └── main.ts                 # Punto de entrada, prefijo global y Swagger
 ├── test/
 │   └── app.e2e-spec.ts         # Prueba e2e de ejemplo
 ├── .env.example                # Plantilla de variables de entorno
@@ -220,12 +240,30 @@ Todas las rutas usan el prefijo global `api/petora`:
 http://localhost:3000/api/petora
 ```
 
+### Documentación interactiva (Swagger)
+
+La aplicación publica una interfaz generada a partir de los controladores y los DTOs, cuyos campos están anotados con `@ApiProperty`.
+
+| Recurso | URL |
+| --- | --- |
+| Swagger UI | `http://localhost:3000/api/docs` |
+| JSON OpenAPI | `http://localhost:3000/api/docs-json` |
+
+Para probar endpoints protegidos:
+
+1. Ejecuta `POST /api/petora/auth/login` y copia el `token` de la respuesta.
+2. Abre `http://localhost:3000/api/docs` y pulsa **Authorize**.
+3. Pega el token en el esquema `bearer` y confirma.
+
+La interfaz conserva el token al recargar la página y muestra el tiempo de respuesta de cada petición.
+
 ### Autenticación
 
 | Método | Ruta | Acceso | Descripción |
 | --- | --- | --- | --- |
 | `POST` | `/auth/register` | Público | Registra un usuario y devuelve su token |
 | `POST` | `/auth/login` | Público | Inicia sesión y devuelve un token |
+| `GET` | `/auth/check-status` | JWT | Verifica la sesión y devuelve un token renovado |
 | `GET` | `/auth/testing` | JWT | Devuelve el usuario autenticado (prueba) |
 | `GET` | `/auth/testing2` | JWT + `superAdmin` | Endpoint de prueba de roles |
 | `GET` | `/auth/testing3` | JWT + `admin` | Endpoint de prueba de roles |
@@ -393,6 +431,7 @@ Decoradores disponibles:
 | Decorador | Función |
 | --- | --- |
 | `@Auth()` | Exige JWT; sin argumentos solo requiere autenticación |
+| `@Authorization()` | Alias de `@Auth()`; exige JWT sin roles específicos |
 | `@Auth(ValidRoles.admin)` | Exige JWT y el rol indicado |
 | `@AdminAuth()` | Exige el rol `admin` |
 | `@SuperAdminAuth()` | Exige el rol `superAdmin` |
@@ -470,7 +509,7 @@ Puedes iniciar sesión con cualquiera de ellos después de ejecutar el seed.
 
 ## Pruebas
 
-El proyecto usa [Vitest](https://vitest.dev/):
+El proyecto está configurado con [Vitest](https://vitest.dev/):
 
 ```bash
 pnpm test        # pruebas unitarias (*.spec.ts)
@@ -479,7 +518,7 @@ pnpm test:cov    # cobertura
 pnpm test:e2e    # pruebas end-to-end (*.e2e-spec.ts)
 ```
 
-La prueba incluida en `test/app.e2e-spec.ts` es la plantilla generada por NestJS y espera un `GET /` con `Hello World!`; debe actualizarse para probar un endpoint real de Petora antes de usarse como prueba de humo.
+Actualmente no hay archivos `*.spec.ts`, por lo que `pnpm test` termina con código 1 al no encontrar pruebas unitarias. La prueba incluida en `test/app.e2e-spec.ts` es la plantilla generada por NestJS y espera un `GET /` con `Hello World!`; debe actualizarse para probar un endpoint real de Petora antes de usarse como prueba de humo.
 
 ## Configuración del proyecto
 
@@ -503,6 +542,7 @@ La prueba incluida en `test/app.e2e-spec.ts` es la plantilla generada por NestJS
 - Los servicios documentan el flujo de negocio, los parámetros y las excepciones.
 - Los controladores documentan cada endpoint y su nivel de acceso.
 - Las entidades describen columnas, relaciones y hooks de TypeORM.
+- Las entidades y los DTOs usan `@ApiProperty` para documentar campos, ejemplos y validaciones en Swagger.
 
 ## Notas y consideraciones
 
@@ -514,6 +554,7 @@ La prueba incluida en `test/app.e2e-spec.ts` es la plantilla generada por NestJS
 - **Módulos ESM:** los imports relativos incluyen la extensión `.js`, requerida por `module: NodeNext`.
 - **JWT:** los tokens expiran a las 2 horas. El payload solo contiene el `id` del usuario.
 - **Cloudinary:** las credenciales se leen al iniciar el servicio; si falta alguna, la aplicación no arranca.
+- **Swagger público:** la documentación en `/api/docs` no requiere autenticación. Si la API se expone públicamente, considera restringir el acceso o deshabilitar la interfaz en producción.
 
 ## Licencia
 
