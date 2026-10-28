@@ -8,6 +8,7 @@ import { AuthService } from './auth.service.js';
 import { User } from './entities/user.entity.js';
 import { UserRoleGuard } from './guards/user-role.guard.js';
 import { ValidRoles } from './interfaces/valid-roles.interface.js';
+import { Authorization } from './decorators/role-auth.decorator.js';
 
 /**
  * Controlador de autenticación.
@@ -47,6 +48,27 @@ export class AuthController {
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
   }
+
+
+  /**
+   * Verifica el estado de autenticación del usuario.
+   *
+   * Requiere un token JWT válido, validado por el decorador compuesto
+   * `@Authorization()`. Devuelve los datos del usuario autenticado y un
+   * nuevo token JWT, lo que permite mantener la sesión activa.
+   *
+   * @param user Usuario autenticado, extraído del token por `@GetUSer()`.
+   * @returns Mensaje de confirmación, datos del usuario y un token JWT renovado.
+   */
+  @Get('check-status')
+  @Authorization()
+  chechAuthStatus(
+    @GetUSer() user: User
+  ) {
+    return this.authService.checkAuthStatus(user)
+  }
+
+
 
   /**
    * Endpoint de prueba: requiere un token JWT válido.

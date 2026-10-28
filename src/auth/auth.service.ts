@@ -109,6 +109,28 @@ export class AuthService {
   }
 
 
+
+
+  /**
+   * Verifica el estado de autenticación de un usuario ya validado.
+   *
+   * El usuario llega previamente autenticado por la estrategia JWT, por lo
+   * que solo se devuelven sus datos y se emite un nuevo token para renovar
+   * la sesión.
+   *
+   * @param user Usuario autenticado proveniente de la petición.
+   * @returns Mensaje de confirmación, datos del usuario y un token JWT renovado.
+   */
+  async checkAuthStatus(user: User) {
+    return {
+      message: 'Login exitoso',
+      ...user,
+      token: this.getJwtToken({ id: user.id })
+    }
+  }
+
+
+
   /**
    * Firma un token JWT con el payload indicado.
    *
