@@ -1,4 +1,5 @@
 allowBuilds:
-  bcrypt: set this to true or false
+  '@scarf/scarf': false
+  bcrypt: true
 minimumReleaseAgeExclude:
   - superagent@10.4.0
